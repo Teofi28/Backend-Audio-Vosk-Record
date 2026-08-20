@@ -1,0 +1,21 @@
+.form {
+  display: grid;
+  grid-template-columns: 1;
+  row-gap: 10px;
+  margin: 10px 25%;
+  padding: 15px;
+  background-color: #fbf7f3;
+  border-radius: 5px;
+  border: 0.2px solid #6589a6;
+}
+
+.form textarea {
+  max-width: 100%;
+  height: 200px;
+}
+
+@media (max-width: 1000px) {
+  .form {
+    margin: 10px;
+  }
+}

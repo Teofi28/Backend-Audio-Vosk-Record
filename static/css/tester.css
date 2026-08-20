@@ -1,0 +1,123 @@
+.custom-body {
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+.main {
+  height: 50%;
+  width: 50%;
+  background-color: #f4efe8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.main__options-container {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+
+.main__options-container__option {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+}
+
+.main__options-container__option__container-select {
+  display: flex;
+  column-gap: 10px;
+}
+
+.main__options-container__option__container-select__select {
+  background-color: #f4efe8;
+  width: 100%;
+  border: 1px solid black;
+  margin-left: 5px;
+}
+
+.separator {
+  width: 100%;
+  height: 1px;
+  background-color: black;
+}
+
+.main__process-container {
+  flex-grow: 1;
+  background-color: white;
+  border-radius: 5px;
+  height: 1px;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+}
+
+.main__actions-container {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  width: 100%;
+}
+
+.survey {
+  display: flex;
+  background-color: #800000;
+  color: white;
+  align-items: center;
+  margin-left: auto;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.modal:open {
+  background-color: transparent;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-helper {
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  background-color: #dbd7d0;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #0b476f;
+}
+
+.modal-helper select {
+  outline: none;
+}
+
+.sound-container {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 1000px) {
+  .custom-body {
+    padding: 10px;
+  }
+  .main {
+    width: 100%;
+    height: 100%;
+  }
+  .main__actions-container {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .main__actions-container__button {
+    flex-grow: 1;
+  }
+  .main__options-container__option {
+    flex-direction: column;
+  }
+}
