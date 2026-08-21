@@ -1,3 +1,5 @@
+import time
+import logging
 import asyncio
 from os import remove
 from typing import Annotated
@@ -70,11 +72,11 @@ async def analyze_audio(
 ):
     name = str(uuid4()) + ".webm"
     output = str(uuid4()) + ".wav"
-
+    
     try:
         with open(name, "wb") as f:
             f.write(await audio.read())
-
+        t0 = time.perf_counter()
         # Normalize every browser recording to the WAV format expected by the
         # speech-recognition engines. Mono/16 kHz is a good Vosk input format
         # and Whisper can read it without any special handling.
@@ -94,6 +96,10 @@ async def analyze_audio(
             stderr=asyncio.subprocess.PIPE,
         )
         _stdout, stderr = await ffmpeg.communicate()
+        logging.warning(
+            "TIMING FFMPEG %.2fs",
+            time.perf_counter() - t0,
+        )
         if ffmpeg.returncode != 0:
             raise HTTPException(
                 status_code=422,
@@ -103,14 +109,32 @@ async def analyze_audio(
         # Reading keeps the existing Whisper path. Listening and Speaking use
         # Vosk, but the response format remains identical for the frontend.
         if method == "reading":
+            t0 = time.perf_counter()
+            logging.warning("TIMING WHISPER START")
             actual = await custom_whisper.transcribe(output)
+            logging.warning(
+                "TIMING WHISPER END %.2fs",
+                time.perf_counter() - t0,
+            )
         else:
             actual = await transcribe_wav(output, settings.model_name)
 
-        return await analyze_paragraph(
+        t0 = time.perf_counter()
+
+        logging.warning("TIMING ANALYZE/OPENAI START")
+
+        result = await analyze_paragraph(
             AnalyzeBody(expected=expected, actual=actual, method=method),
             settings,
         )
+
+        logging.warning(
+            "TIMING ANALYZE/OPENAI END %.2fs",
+            time.perf_counter() - t0,
+        )
+
+        return result
+
     finally:
         # Never leave user recordings behind, even if ffmpeg or recognition
         # raises an exception.
