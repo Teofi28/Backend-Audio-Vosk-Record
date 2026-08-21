@@ -164,11 +164,11 @@ async def analyze_audio(
     finally:
         # Never leave user recordings behind, even if ffmpeg or recognition
         # raises an exception.
-        for filename in (name, output):
-            try:
-                remove(filename)
-            except FileNotFoundError:
-                pass
+        
+        try:
+            remove(filename)
+        except FileNotFoundError:
+            pass
 
 
 async def analyze_paragraph(body: AnalyzeBody, setting: SettingDepends):
