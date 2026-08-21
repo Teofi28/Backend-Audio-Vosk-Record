@@ -106,6 +106,27 @@ async def analyze_audio(
                 detail=f"Audio conversion failed: {stderr.decode(errors='replace')[-500:]}",
             )
 
+        # Medir duración real del WAV que recibirá Whisper
+        probe = await asyncio.create_subprocess_exec(
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            output,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+
+        stdout, _ = await probe.communicate()
+
+        logging.warning(
+            "TIMING AUDIO DURATION %ss",
+            stdout.decode().strip(),
+        )
+
         # Reading keeps the existing Whisper path. Listening and Speaking use
         # Vosk, but the response format remains identical for the frontend.
         if method == "reading":
