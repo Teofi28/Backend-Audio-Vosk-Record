@@ -73,6 +73,25 @@ class CustomWhisper:
             self.active_transcriptions -= 1
             queue.put_nowait(worker)
 
+    async def warmup(self) -> None:
+        queue = await self._get_queue()
+
+        workers = []
+        while not queue.empty():
+            workers.append(queue.get_nowait())
+
+        try:
+            await asyncio.gather(
+                *(
+                    asyncio.to_thread(worker._ensure_model)
+                    for worker in workers
+                )
+            )
+        finally:
+            for worker in workers:
+                queue.put_nowait(worker)
+
+
     def stats(self) -> dict[str, int | str]:
         return {
             "workers": self.workers,
