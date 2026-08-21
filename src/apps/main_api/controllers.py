@@ -91,6 +91,11 @@ async def analyze_audio(
             "1",
             "-ar",
             "16000",
+            "-af",
+            (
+                "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.3"
+                ":stop_periods=-1:stop_threshold=-45dB:stop_silence=0.5"
+            ),
             output,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
