@@ -37,7 +37,15 @@ class WhisperWorker:
 
     def _transcribe_sync(self, audio_file: str) -> str:
         model = self._ensure_model()
-        result = model.transcribe(audio_file)
+        result = model.transcribe(
+            audio_file,
+            language="en",
+            temperature=0.0,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.6,
+            logprob_threshold=-1.0,
+            word_timestamps=False,
+        )
         return cast(str, result["text"]).strip()
 
     async def transcribe(self, audio_file: str) -> str:
