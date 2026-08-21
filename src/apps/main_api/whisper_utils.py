@@ -2,7 +2,7 @@ import asyncio
 import os
 from dataclasses import dataclass
 from typing import cast
-
+import logging
 import whisper
 
 
@@ -19,9 +19,20 @@ class WhisperWorker:
     model: whisper.model.Whisper | None = None
 
     def _ensure_model(self) -> whisper.model.Whisper:
-        # Lazy loading avoids loading GPU models before Reading is used.
         if self.model is None:
+            logging.warning(
+                "WHISPER worker=%d loading model=%s",
+                self.worker_id,
+                self.model_name,
+            )
+
             self.model = whisper.load_model(self.model_name)
+
+            logging.warning(
+                "WHISPER worker=%d model ready",
+                self.worker_id,
+            )
+
         return self.model
 
     def _transcribe_sync(self, audio_file: str) -> str:
@@ -72,6 +83,37 @@ class CustomWhisper:
         finally:
             self.active_transcriptions -= 1
             queue.put_nowait(worker)
+
+    async def warmup(self) -> None:
+        """Load every Whisper model before accepting Reading requests."""
+
+        queue = await self._get_queue()
+
+        logging.warning(
+            "WHISPER warmup starting workers=%d model=%s",
+            self.workers,
+            self.model_name,
+        )
+
+        loaded_workers = []
+
+        while not queue.empty():
+            worker = queue.get_nowait()
+            loaded_workers.append(worker)
+
+        try:
+            # Load sequentially to avoid concurrent model downloads/initialization.
+            for worker in loaded_workers:
+                await asyncio.to_thread(worker._ensure_model)
+        finally:
+            for worker in loaded_workers:
+                queue.put_nowait(worker)
+
+        logging.warning(
+            "WHISPER warmup complete workers=%d model=%s",
+            self.workers,
+            self.model_name,
+        )
 
     def stats(self) -> dict[str, int | str]:
         return {
