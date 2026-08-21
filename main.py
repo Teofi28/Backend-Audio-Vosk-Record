@@ -1,5 +1,5 @@
 import logging
-
+import time
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -27,6 +27,18 @@ async def log_worker_configuration() -> None:
 
     await custom_whisper.warmup()
 
+@app.get("/debug-whisper")
+async def debug_whisper():
+    audio = "377422cb-b41f-4f0b-ba6c-0a399675e8d9.wav"
+
+    t = time.perf_counter()
+    text = await custom_whisper.transcribe(audio)
+    elapsed = time.perf_counter() - t
+
+    return {
+        "seconds": round(elapsed, 2),
+        "text": text,
+    }
 
 # Listening TTS audio is generated under static/ and the existing frontend
 # builds its playback URL from staticUrl + returned /static/... path.
