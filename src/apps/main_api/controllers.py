@@ -1,5 +1,3 @@
-import time
-import logging
 import asyncio
 from os import remove
 from typing import Annotated
@@ -76,7 +74,6 @@ async def analyze_audio(
     try:
         with open(name, "wb") as f:
             f.write(await audio.read())
-        t0 = time.perf_counter()
         # Normalize every browser recording to the WAV format expected by the
         # speech-recognition engines. Mono/16 kHz is a good Vosk input format
         # and Whisper can read it without any special handling.
@@ -108,19 +105,13 @@ async def analyze_audio(
                 detail=f"Audio conversion failed: {stderr.decode(errors='replace')[-500:]}",
             )
 
-
-        stdout, _ = await probe.communicate()
-
         # Reading keeps the existing Whisper path. Listening and Speaking use
         # Vosk, but the response format remains identical for the frontend.
         if method == "reading":
-            t0 = time.perf_counter()
             actual = await custom_whisper.transcribe(output)
 
         else:
             actual = await transcribe_wav(output, settings.model_name)
-
-        t0 = time.perf_counter()
 
         result = await analyze_paragraph(
             AnalyzeBody(expected=expected, actual=actual, method=method),
