@@ -101,74 +101,40 @@ async def analyze_audio(
             stderr=asyncio.subprocess.PIPE,
         )
         _stdout, stderr = await ffmpeg.communicate()
-        logging.warning(
-            "TIMING FFMPEG %.2fs",
-            time.perf_counter() - t0,
-        )
+
         if ffmpeg.returncode != 0:
             raise HTTPException(
                 status_code=422,
                 detail=f"Audio conversion failed: {stderr.decode(errors='replace')[-500:]}",
             )
 
-        # Medir duración real del WAV que recibirá Whisper
-        probe = await asyncio.create_subprocess_exec(
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            output,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
 
         stdout, _ = await probe.communicate()
-
-        logging.warning(
-            "TIMING AUDIO DURATION %ss",
-            stdout.decode().strip(),
-        )
 
         # Reading keeps the existing Whisper path. Listening and Speaking use
         # Vosk, but the response format remains identical for the frontend.
         if method == "reading":
             t0 = time.perf_counter()
-            logging.warning("TIMING WHISPER START")
             actual = await custom_whisper.transcribe(output)
-            logging.warning(
-                "TIMING WHISPER END %.2fs",
-                time.perf_counter() - t0,
-            )
+
         else:
             actual = await transcribe_wav(output, settings.model_name)
 
         t0 = time.perf_counter()
-
-        logging.warning("TIMING ANALYZE/OPENAI START")
 
         result = await analyze_paragraph(
             AnalyzeBody(expected=expected, actual=actual, method=method),
             settings,
         )
 
-        logging.warning(
-            "TIMING ANALYZE/OPENAI END %.2fs",
-            time.perf_counter() - t0,
-        )
-
         return result
 
     finally:
-        # Never leave user recordings behind, even if ffmpeg or recognition
-        # raises an exception.
-        
-        try:
-            remove(name)
-        except FileNotFoundError:
-            pass
+        for filename in (name, output):
+            try:
+                remove(filename)
+            except FileNotFoundError:
+                pass
 
 
 async def analyze_paragraph(body: AnalyzeBody, setting: SettingDepends):
