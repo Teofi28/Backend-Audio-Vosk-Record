@@ -166,7 +166,7 @@ async def analyze_audio(
         # raises an exception.
         
         try:
-            remove(filename)
+            remove(name)
         except FileNotFoundError:
             pass
 
